@@ -2,10 +2,12 @@ package com.example.foody.adapters
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.example.foody.databinding.RecpiesRowLayoutBinding
 import com.example.foody.models.FoodRecipe
 import com.example.foody.models.Result
+import com.example.foody.util.RecipesDiffUtil
 
 class RecipesAdapter : RecyclerView.Adapter<RecipesAdapter.MyViewHolder>() {
 
@@ -44,8 +46,12 @@ class RecipesAdapter : RecyclerView.Adapter<RecipesAdapter.MyViewHolder>() {
     }
 
     fun setData(newData: FoodRecipe) {
+        // 이전꺼, 데이터가 변한값
+        val recipesDiffUtil = RecipesDiffUtil(recipe, newData.results)
+        // 데이터의 차이?? 비교 데이터가 무엇이 변햇는지
+        val diffUtilResult= DiffUtil.calculateDiff(recipesDiffUtil)
         recipe = newData.results
-        notifyDataSetChanged()
-
+        //결과가 나오면 전달
+        diffUtilResult.dispatchUpdatesTo(this)
     }
 }
