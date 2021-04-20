@@ -1,7 +1,7 @@
 package com.example.foody.di
 
-import com.example.foody.Constrants.Companion.BASE_URL
-import com.example.foody.FoodRecipesApi
+import com.example.foody.util.Constrants.Companion.BASE_URL
+import com.example.foody.data.network.FoodRecipesApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -27,9 +27,10 @@ import javax.inject.Singleton
 // 모듈이 의존성 ..??
 @Module
 @InstallIn(SingletonComponent::class)
-
 object NetworkModule {
 
+    @Singleton
+    @Provides
     fun provideHttpClient() : OkHttpClient{
 
         return OkHttpClient.Builder()
@@ -40,6 +41,7 @@ object NetworkModule {
             .build()
 
     }
+
     @Singleton
     @Provides
     fun provideConverterFactory(): GsonConverterFactory{
@@ -66,8 +68,10 @@ object NetworkModule {
 
     // 주입 할 객체
     // Provides constructor 호출 (의존성 생성)
+    // Singleton 하나의 인스턴스만 가짐
     @Singleton
     @Provides
+    //data source 에 삽입
     fun provideApiService(retrofit: Retrofit): FoodRecipesApi {
         return retrofit.create(FoodRecipesApi::class.java)
     }
