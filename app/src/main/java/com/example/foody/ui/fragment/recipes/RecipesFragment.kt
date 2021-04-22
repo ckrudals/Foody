@@ -1,50 +1,51 @@
 package com.example.foody.ui.fragment.recipes
 
-import android.content.ContentValues.TAG
 import android.os.Bundle
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Adapter
-import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.foody.MainViewModel
+import com.example.foody.viewmodels.MainViewModel
 import com.example.foody.R
 import com.example.foody.adapters.RecipesAdapter
-import com.example.foody.util.Constrants.Companion.API_KEY
 import com.example.foody.util.NetworkResult
+import com.example.foody.viewmodels.RecipesViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.fragment_recipes.view.*
 
 @AndroidEntryPoint
 class RecipesFragment : Fragment() {
 
-    val TAG="RecipesFragment"
     private lateinit var mainViewModel: MainViewModel
+    private lateinit var recipesViewModel: RecipesViewModel
     private val mAdapter by lazy { RecipesAdapter() }
     lateinit var mView: View
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        mainViewModel = ViewModelProvider(requireActivity()).get(MainViewModel::class.java)
+        recipesViewModel = ViewModelProvider(requireActivity()).get(RecipesViewModel::class.java)
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-
-        Log.d(TAG,"RecipesFragment - onCreateView() called")
-
-        // Inflate the layout for this frag ment
+        // Inflate the layout for this fragment
         mView = inflater.inflate(R.layout.fragment_recipes, container, false)
 
-        mainViewModel = ViewModelProvider(requireActivity()).get(MainViewModel::class.java)
         setupRecyclerView()
+        requestApiData()
 
         return mView
     }
 
+
     private fun requestApiData() {
-        mainViewModel.getRecipes(applyQueries())
+        mainViewModel.getRecipes(recipesViewModel.applyQueries())
         mainViewModel.recipesResponse.observe(viewLifecycleOwner, { response ->
 //           // response 상태에 따라 로직 나누기
             when (response) {
@@ -71,18 +72,6 @@ class RecipesFragment : Fragment() {
         })
     }
 
-    private fun applyQueries(): HashMap<String, String> {
-        val queries: HashMap<String, String> = HashMap()
-        queries["number"] = "50"
-        queries["apikey"] = API_KEY
-        queries["type"] = "snack"
-        queries["diet"] = "vegan"
-        queries["addRecipeInformation"] = "true"
-        queries["fillIngredients"] = "true"
-
-        return queries
-
-    }
 
     private fun setupRecyclerView() {
         mView.recyclerview.adapter = mAdapter
