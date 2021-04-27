@@ -1,6 +1,8 @@
 package com.example.foody.ui.fragment.recipes
 
+import android.content.ContentValues.TAG
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -11,14 +13,15 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.foody.viewmodels.MainViewModel
 import com.example.foody.R
 import com.example.foody.adapters.RecipesAdapter
+import com.example.foody.databinding.FragmentRecipesBinding
 import com.example.foody.util.NetworkResult
 import com.example.foody.viewmodels.RecipesViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.android.synthetic.main.fragment_recipes.view.*
 
 @AndroidEntryPoint
 class RecipesFragment : Fragment() {
-
+    private var _binding: FragmentRecipesBinding? = null
+    private val binding get() = _binding!!
     private lateinit var mainViewModel: MainViewModel
     private lateinit var recipesViewModel: RecipesViewModel
     private val mAdapter by lazy { RecipesAdapter() }
@@ -35,16 +38,36 @@ class RecipesFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
-        mView = inflater.inflate(R.layout.fragment_recipes, container, false)
+        _binding = FragmentRecipesBinding.inflate(inflater, container, false)
+
 
         setupRecyclerView()
-        requestApiData()
+        readDataBase()
 
-        return mView
+        return binding.root
+    }
+
+    private fun readDataBase() {
+        mainViewModel.readRecipes.observe(viewLifecycleOwner, { database ->
+            // 비어있지 않다면
+            if (database.isNotEmpty()) {
+
+                Log.d(TAG, "readDataBase: ")
+                mAdapter.setData(database[0].foodRecipe)
+
+            } else {
+
+                // 비어있으면
+                requestApiData()
+            }
+
+        })
     }
 
 
     private fun requestApiData() {
+
+        Log.d(TAG, "requestApiData: ")
         mainViewModel.getRecipes(recipesViewModel.applyQueries())
         mainViewModel.recipesResponse.observe(viewLifecycleOwner, { response ->
 //           // response 상태에 따라 로직 나누기
@@ -74,18 +97,18 @@ class RecipesFragment : Fragment() {
 
 
     private fun setupRecyclerView() {
-        mView.recyclerview.adapter = mAdapter
-        mView.recyclerview.layoutManager = LinearLayoutManager(requireContext())
+        binding.recyclerview.adapter = mAdapter
+        binding.recyclerview.layoutManager = LinearLayoutManager(requireContext())
     }
 
     private fun showShimmerEffect() {
 
         //showShimmer 이란 리스트화면에서 데이터를 로딩하는 동안 흐르는 애니매이션
-        mView.recyclerview.showShimmer()
+        binding.recyclerview.showShimmer()
     }
 
     private fun hideShimmerEffect() {
-        mView.recyclerview.hideShimmer()
+        binding.recyclerview.hideShimmer()
     }
 
 }
