@@ -15,7 +15,7 @@ class LocalDataSource @Inject constructor(
     }
 
     //suspend 를 붙여야하는 이유는?
-    suspend fun insertRecipes(recipesEntity: LiveData<List<RecipesEntity>>) {
+    suspend fun insertRecipes(recipesEntity:RecipesEntity) {
         recipesDao.insertRecipes(recipesEntity)
     }
 }
