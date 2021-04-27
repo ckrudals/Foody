@@ -1,28 +1,40 @@
-package com.example.foody
+package com.example.foody.viewmodels
 
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import androidx.hilt.lifecycle.ViewModelInject
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.example.foody.data.Repository
+import com.example.foody.data.database.RecipesEntity
 import com.example.foody.models.FoodRecipe
 import com.example.foody.util.NetworkResult
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import retrofit2.Response
 import javax.inject.Inject
 
 // ViewModelInject 는 삭제됨 HiltViewModel 로 쓰기
 @HiltViewModel
+// 생성자 주입
 class MainViewModel @Inject constructor(
     private val repository: Repository,
     application: Application
 ) : AndroidViewModel(application) {
+
+
+    // 오류 생기는 이유
+    // suspend 를 안붙여서
+
+    val readRecipes: LiveData<List<RecipesEntity>> = repository.local.readDatabase().asLiveData()
+
+    private fun insertRecipes(recipesEntity: RecipesEntity) =
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.local.insertRecipes(recipesEntity)
+        }
+
 
     //LiveData 선언
     var recipesResponse: MutableLiveData<NetworkResult<FoodRecipe>> = MutableLiveData()
@@ -42,6 +54,12 @@ class MainViewModel @Inject constructor(
             try {
                 val response = repository.remote.getRecipes(queries)
                 recipesResponse.value = handleFoodRecipeResponse(response)
+
+                val foodRecipe = recipesResponse.value!!.data
+                if (foodRecipe != null) {
+                    offlineCashRecipes(foodRecipe)
+                }
+
             } catch (e: Exception) {
                 recipesResponse.value = NetworkResult.Error("Recipes not found")
             }
@@ -49,6 +67,13 @@ class MainViewModel @Inject constructor(
             // 인터넷 연결 실패
             recipesResponse.value = NetworkResult.Error("No Internet Connection.")
         }
+    }
+
+    private fun offlineCashRecipes(foodRecipe: FoodRecipe) {
+
+        val recipesEntity = RecipesEntity(foodRecipe)
+        insertRecipes(recipesEntity)
+
     }
 
     private fun handleFoodRecipeResponse(response: Response<FoodRecipe>): NetworkResult<FoodRecipe>? {
@@ -69,7 +94,7 @@ class MainViewModel @Inject constructor(
                 return NetworkResult.Error("Recipes not found.")
             }
 
-            //성공했을 때 data 를 가져옴 
+            //성공했을 때 data 를 가져옴
             response.isSuccessful -> {
                 val foodRecipe = response.body()
                 return NetworkResult.Success(foodRecipe!!)
@@ -87,10 +112,8 @@ class MainViewModel @Inject constructor(
 
     private fun hasInternetConnection(): Boolean {
         val connectivityManager = getApplication<Application>().getSystemService(
-            //연결 요청
-            Context.CONNECTIVITY_DIAGNOSTICS_SERVICE
+            Context.CONNECTIVITY_SERVICE
         ) as ConnectivityManager
-
         //연결 관리자
         val activeNetwork = connectivityManager.activeNetwork ?: return false
         val capabilities = connectivityManager.getNetworkCapabilities(activeNetwork) ?: return false
