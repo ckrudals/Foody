@@ -3,11 +3,10 @@ package com.example.foody.ui.fragment.recipes
 import android.content.ContentValues.TAG
 import android.os.Bundle
 import android.util.Log
+import android.view.*
 import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.widget.SearchView
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -26,19 +25,20 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class RecipesFragment : Fragment() {
+class RecipesFragment : Fragment(), SearchView.OnQueryTextListener {
 
     private val args by navArgs<RecipesFragmentArgs>()
 
     private var _binding: FragmentRecipesBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var a: String
 
     private lateinit var mainViewModel: MainViewModel
     private lateinit var recipesViewModel: RecipesViewModel
     private val mAdapter by lazy { RecipesAdapter() }
     private lateinit var networkListener: NetworkListener
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         mainViewModel = ViewModelProvider(requireActivity()).get(MainViewModel::class.java)
@@ -52,11 +52,16 @@ class RecipesFragment : Fragment() {
         _binding = FragmentRecipesBinding.inflate(inflater, container, false)
         binding.lifecycleOwner = this
         binding.mainViewModel = mainViewModel
+
+        setHasOptionsMenu(true)
+
         setupRecyclerView()
 
-        recipesViewModel.readBackOnline.observe(viewLifecycleOwner,{
-            recipesViewModel.backOnline=it
+        recipesViewModel.readBackOnline.observe(viewLifecycleOwner, {
+            Log.d(TAG, "onCreateView: $it")
+            recipesViewModel.backOnline = it
         })
+
         // suspend 로 보냈으니 비동기처리 코루틴으로 감싼다.
         lifecycleScope.launch {
             networkListener = NetworkListener()
@@ -70,7 +75,6 @@ class RecipesFragment : Fragment() {
                 }
         }
         binding.recipesFab.setOnClickListener {
-
             // 인터넷 연결 되었나 ?
             if (recipesViewModel.networkStatus) {
                 findNavController().navigate(R.id.action_recipesFragment_to_bottomSheetDialogFragment)
@@ -84,10 +88,60 @@ class RecipesFragment : Fragment() {
         return binding.root
     }
 
+    // recyclerView 초기화
     private fun setupRecyclerView() {
         binding.recyclerview.adapter = mAdapter
         binding.recyclerview.layoutManager = LinearLayoutManager(requireContext())
         showShimmerEffect()
+    }
+
+    // menu 설정
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.recipes_menu, menu)
+
+        val search = menu.findItem(R.id.menu_search)
+        val searchView = search.actionView as? SearchView
+        searchView?.isSubmitButtonEnabled = true
+        searchView?.setOnQueryTextListener(this)
+    }
+    // text
+    override fun onQueryTextSubmit(query: String?): Boolean {
+
+        if(query!=null){
+            Log.d(TAG, "onQueryTextSubmit: ")
+            searchApiData(query)
+        }
+        return true
+    }
+
+    override fun onQueryTextChange(newText: String?): Boolean {
+        return true
+    }
+
+    private fun searchApiData(searchQuery: String) {
+        showShimmerEffect()
+        mainViewModel.searchRecipes(recipesViewModel.applySearchQuery(searchQuery))
+        mainViewModel.searchRecipesResponse.observe(viewLifecycleOwner, { response ->
+            when (response) {
+                is NetworkResult.Success -> {
+                    hideShimmerEffect()
+                    val foodRecipe = response.data
+                    foodRecipe?.let { mAdapter.setData(it) }
+                }
+                is NetworkResult.Error -> {
+                    hideShimmerEffect()
+                    loadDataFromCache()
+                    Toast.makeText(
+                        requireContext(),
+                        response.message.toString(),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                is NetworkResult.Loading -> {
+                    showShimmerEffect()
+                }
+            }
+        })
     }
 
     private fun readDatabase() {
@@ -151,4 +205,6 @@ class RecipesFragment : Fragment() {
         super.onDestroy()
         _binding = null
     }
+
+
 }
