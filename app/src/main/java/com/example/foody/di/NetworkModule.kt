@@ -1,5 +1,7 @@
 package com.example.foody.di
 
+import android.content.ContentValues.TAG
+import android.util.Log
 import com.example.foody.util.Constrants.Companion.BASE_URL
 import com.example.foody.data.network.FoodRecipesApi
 import dagger.Module
@@ -25,6 +27,8 @@ import javax.inject.Singleton
 //Module, InstallIn 은 constructor 호출하는 모듈 생성(선언)
 
 // 모듈이 의존성 ..??
+// 인스턴스를 하나만 받아옴 << 싱글톤
+// 네트워크 Retrofit2에서 객체를 받아올 때 하나씩만 안받아오면 메모리 과부하 걸림
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
@@ -32,7 +36,7 @@ object NetworkModule {
     @Singleton
     @Provides
     fun provideHttpClient() : OkHttpClient{
-
+        Log.d(TAG, "provideHttpClient: ")
         return OkHttpClient.Builder()
          //제한시간 15초
             .readTimeout(15, TimeUnit.SECONDS)
@@ -45,26 +49,27 @@ object NetworkModule {
     @Singleton
     @Provides
     fun provideConverterFactory(): GsonConverterFactory{
-
+        Log.d(TAG, "provideConverterFactory: ")
         return GsonConverterFactory.create()
     }
 
     // Provides 로 객체를 생성
     // Singleton 으로 어디서나 동일한 객체 제공
-    @Singleton
-    @Provides
-    fun provideRetrofitInstance(
-        okHttpClient: OkHttpClient,
-        gsonConverterFactory: GsonConverterFactory
-    ): Retrofit {
-        return Retrofit.Builder()
-            .baseUrl(BASE_URL) //다른 Class 에 있는 변수값을 가져다 쓸 수 있나 ??
-            .client(okHttpClient)
-                //json 변화기 Factory
-            .addConverterFactory(gsonConverterFactory)
-            .build()
+        @Singleton
+        @Provides
+        fun provideRetrofitInstance(
+            okHttpClient: OkHttpClient,
+            gsonConverterFactory: GsonConverterFactory
+        ): Retrofit {
+            Log.d(TAG, "provideRetrofitInstance: ")
+            return Retrofit.Builder()
+                .baseUrl(BASE_URL) //다른 Class 에 있는 변수값을 가져다 쓸 수 있나 ??
+                .client(okHttpClient)
+                    //json 변화기 Factory
+                .addConverterFactory(gsonConverterFactory)
+                .build()
 
-    }
+        }
 
     // 주입 할 객체
     // Provides constructor 호출 (의존성 생성)
@@ -73,6 +78,7 @@ object NetworkModule {
     @Provides
     //data source 에 삽입
     fun provideApiService(retrofit: Retrofit): FoodRecipesApi {
+        Log.d(TAG, "provideApiService: ")
         return retrofit.create(FoodRecipesApi::class.java)
     }
 }

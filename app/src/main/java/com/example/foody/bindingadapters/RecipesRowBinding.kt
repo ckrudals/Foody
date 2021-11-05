@@ -1,12 +1,19 @@
 package com.example.foody.bindingadapters
 
+import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.databinding.BindingAdapter
+import androidx.navigation.findNavController
 import coil.load
 import com.example.foody.R
+import com.example.foody.models.Result
+import com.example.foody.ui.fragment.recipes.RecipesFragmentDirections
+import org.jsoup.Jsoup
+import java.lang.Exception
 
 class RecipesRowBinding {
     /***
@@ -26,7 +33,21 @@ class RecipesRowBinding {
     // 정적 지역 변수의 메모리 생성 시점 중괄호 내에서 초기화 할때
 
     companion object {
+        @BindingAdapter("onRecipeClickListener")
+        @JvmStatic
+        fun onRecipeClickListener(recipeRowLayout:ConstraintLayout, result:Result){
 
+
+            recipeRowLayout.setOnClickListener {
+                try{
+                    val action=
+                        RecipesFragmentDirections.actionRecipesFragmentToDetailsActivity(result)
+                    recipeRowLayout.findNavController().navigate(action)
+                }catch (e:Exception){
+                    Log.d("TAG", "onRecipeClickListener: ")
+                }
+            }
+        }
      @BindingAdapter("loadImageFromUrl")
      @JvmStatic
         fun loadImageFromUrl(imageView: ImageView, imageUrl: String) {
@@ -46,7 +67,7 @@ class RecipesRowBinding {
 
         @BindingAdapter("setNumberOfMinutes")
         @JvmStatic
-        fun setNumberOfMinutes(textView: TextView, minutes: Int) {
+        fun setNumberOfMinuztes(textView: TextView, minutes: Int) {
             textView.text = minutes.toString()
         }
 
@@ -75,6 +96,15 @@ class RecipesRowBinding {
                         )
                     }
                 }
+            }
+        }
+
+        @BindingAdapter("parseHtml")
+        @JvmStatic
+        fun parseHtml(textView: TextView, description:String?){
+            if(description!=null){
+                val desc= Jsoup.parse(description).text()
+                textView.text=desc
             }
         }
     }

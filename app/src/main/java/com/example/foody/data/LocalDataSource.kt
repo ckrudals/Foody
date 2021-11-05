@@ -10,11 +10,12 @@ import javax.inject.Inject
 class LocalDataSource @Inject constructor(
     private val recipesDao: RecipesDao
 ) {
+    //flow 와 LiveData는 다르다
      fun readDatabase(): Flow<List<RecipesEntity>> {
         return recipesDao.readRecipes()
     }
 
-    //suspend 를 붙여야하는 이유는?
+    //suspend 를 붙여야하는 이유는? -> 비동기 처리 가능하게 하기위해
     suspend fun insertRecipes(recipesEntity:RecipesEntity) {
         recipesDao.insertRecipes(recipesEntity)
     }

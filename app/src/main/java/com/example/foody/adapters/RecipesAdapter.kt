@@ -20,8 +20,6 @@ class RecipesAdapter : RecyclerView.Adapter<RecipesAdapter.MyViewHolder>() {
         RecyclerView.ViewHolder(binding.root) {
         fun bind(result: Result) {
             binding.result = result
-            // 데이터 내부에 변경 사항이있을 때마다 레이아웃을 업데이트함
-            // 바인딩을 즉시 실행할 때 -> 업데이트가 될 때 ??
             binding.executePendingBindings()
         }
 
@@ -35,7 +33,6 @@ class RecipesAdapter : RecyclerView.Adapter<RecipesAdapter.MyViewHolder>() {
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
-        Log.d(TAG,"MyViewHolder - () called")
 
         return MyViewHolder.from(parent)
     }

@@ -104,7 +104,7 @@ class RecipesFragment : Fragment(), SearchView.OnQueryTextListener {
         searchView?.isSubmitButtonEnabled = true
         searchView?.setOnQueryTextListener(this)
     }
-    // text
+    // 완료 누를때 액션
     override fun onQueryTextSubmit(query: String?): Boolean {
 
         if(query!=null){
@@ -114,6 +114,8 @@ class RecipesFragment : Fragment(), SearchView.OnQueryTextListener {
         return true
     }
 
+
+// text가 바뀔때마다 액션
     override fun onQueryTextChange(newText: String?): Boolean {
         return true
     }
@@ -183,6 +185,7 @@ class RecipesFragment : Fragment(), SearchView.OnQueryTextListener {
         })
     }
 
+        // 데이터가 observe 되면 adapter refresh
     private fun loadDataFromCache() {
         lifecycleScope.launch {
             mainViewModel.readRecipes.observe(viewLifecycleOwner, { database ->

@@ -1,4 +1,4 @@
-package com.example.foody.util
+package com.example.foody
 
 import android.app.Application
 import dagger.hilt.android.HiltAndroidApp

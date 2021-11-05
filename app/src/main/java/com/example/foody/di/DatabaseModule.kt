@@ -8,11 +8,12 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 //이해못함 왜 필요 ?
 @Module
-@InstallIn(ApplicationContext::class)
+@InstallIn(SingletonComponent::class)
 object DatabaseModule {
 
     @Singleton
@@ -30,4 +31,6 @@ object DatabaseModule {
     @Singleton
     @Provides
     fun provideDao(database: RecipesDatabase) = database.recipesDao()
+
+
 }

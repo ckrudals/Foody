@@ -2,9 +2,11 @@ package com.example.foody.viewmodels
 
 import android.annotation.SuppressLint
 import android.app.Application
+import android.content.ContentValues.TAG
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.util.Log
 import androidx.lifecycle.*
 import com.example.foody.data.Repository
 import com.example.foody.data.database.RecipesEntity
@@ -29,34 +31,66 @@ class MainViewModel @Inject constructor(
     // suspend 를 안붙여서
 
     val readRecipes: LiveData<List<RecipesEntity>> = repository.local.readDatabase().asLiveData()
+    var recipesResponse: MutableLiveData<NetworkResult<FoodRecipe>> = MutableLiveData()
+    var searchRecipesResponse: MutableLiveData<NetworkResult<FoodRecipe>> = MutableLiveData()
 
     private fun insertRecipes(recipesEntity: RecipesEntity) =
         viewModelScope.launch(Dispatchers.IO) {
             repository.local.insertRecipes(recipesEntity)
         }
 
+    fun searchRecipes(searchQuery: Map<String, String>) = viewModelScope.launch {
+        searchRecipesSafeCall(searchQuery)
+    }
+
+    private suspend fun searchRecipesSafeCall(searchQuery: Map<String, String>) {
+        searchRecipesResponse.value = NetworkResult.Loading()
+
+        //인터넷이 연결되었을 때
+        if (hasInternetConnection()) {
+            try {
+                Log.d(TAG, "searchRecipesSafeCall: ")
+                val response = repository.remote.searchRecipes(searchQuery)
+
+                searchRecipesResponse.value = handleFoodRecipeResponse(response)
+                Log.d(TAG, "searchRecipesSafeCall value: ${searchRecipesResponse.value} ")
+
+            } catch (e: Exception) {
+                searchRecipesResponse.value = NetworkResult.Error("Recipes not found")
+            }
+        } else {
+            // 인터넷 연결 실패
+            searchRecipesResponse.value = NetworkResult.Error("No Internet Connection.")
+        }
+    }
 
     //LiveData 선언
-    var recipesResponse: MutableLiveData<NetworkResult<FoodRecipe>> = MutableLiveData()
 
     fun getRecipes(queries: Map<String, String>) = viewModelScope.launch {
 
+        Log.d(TAG, "MainViewModel - getRecipes() called")
         getRecipesSafeCall(queries)
     }
 
     private suspend fun getRecipesSafeCall(queries: Map<String, String>) {
 
+        Log.d(TAG, "getRecipesSafeCall: ")
         // 먼저 Loading 으로
         recipesResponse.value = NetworkResult.Loading()
 
         //인터넷이 연결되었을 때
         if (hasInternetConnection()) {
             try {
+                Log.d(TAG, "getRecipesSafeCall: ")
                 val response = repository.remote.getRecipes(queries)
+
                 recipesResponse.value = handleFoodRecipeResponse(response)
+                Log.d(TAG, "getRecipesSafeCall value: ${recipesResponse.value} ")
 
                 val foodRecipe = recipesResponse.value!!.data
+                Log.d(TAG, "getRecipesSafeCall: $foodRecipe")
                 if (foodRecipe != null) {
+                    Log.d(TAG, "foodRecipe: ")
                     offlineCashRecipes(foodRecipe)
                 }
 
@@ -86,6 +120,7 @@ class MainViewModel @Inject constructor(
 
             // 402가 뜰 때
             response.code() == 402 -> {
+                Log.d(TAG, "handleFoodRecipeResponse: ${response.body()}")
                 return NetworkResult.Error("API Key Limited.")
             }
 
@@ -108,7 +143,6 @@ class MainViewModel @Inject constructor(
 
 
     //인터넷 확인 함수
-    @SuppressLint("WrongConstant")
 
     private fun hasInternetConnection(): Boolean {
         val connectivityManager = getApplication<Application>().getSystemService(
@@ -125,3 +159,4 @@ class MainViewModel @Inject constructor(
         }
     }
 }
+

@@ -7,9 +7,9 @@ import androidx.recyclerview.widget.DiffUtil
 //areItemsTheSame : 현재 리스트에 노출하고 있는 아이템과 새로운 아이템이 서로 같은지 비교한다. 보통 고유한 ID 값을 체크한다.
 //areContentsTheSame : 현재 리스트에 노출하고 있는 아이템과 새로운 아이템의 equals 를 비교한다.
 
-class RecipesDiffUtil(
-    private val oldList: List<com.example.foody.models.Result>,
-    private val newList: List<com.example.foody.models.Result>
+class RecipesDiffUtil<T>(
+    private val oldList: List<T>,
+    private val newList: List<T>
 ) : DiffUtil.Callback() {
     override fun getOldListSize(): Int {
         // 함수목록 가져오기

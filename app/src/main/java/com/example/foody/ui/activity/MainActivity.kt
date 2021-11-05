@@ -1,32 +1,39 @@
 package com.example.foody.ui.activity
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.foody.R
-import kotlinx.android.synthetic.main.activity_main.*
+import com.example.foody.databinding.ActivityMainBinding
+import com.example.foody.databinding.ActivityMainBinding.inflate
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
+    private val binding by lazy { ActivityMainBinding.inflate(layoutInflater) }
     private lateinit var navController: NavController
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(binding.root)
 
-        //NavController 생성
-         navController=findNavController(R.id.navHostFragment)
+        navController = findNavController(R.id.navHostFragment)
+        val appBarConfiguration = AppBarConfiguration(
+            setOf(
+                R.id.recipesFragment,
+                R.id.favoriteRecipesFragment,
+                R.id.foodJokeFragment
+            )
+        )
 
-        //앱 바 구성성
-       val appBarConfiguration= AppBarConfiguration(setOf(R.id.recipesFragment,R.id.favoriteRecipesFragment,R.id.foodJokeFragment))
+        binding.bottomNavigationView.setupWithNavController(navController)
+        setupActionBarWithNavController(navController, appBarConfiguration)
 
-
-        // 바텀네비게이션뷰에 붙임
-        bottomNavigationView.setupWithNavController(navController)
-        setupActionBarWithNavController(navController,appBarConfiguration)
     }
 
     override fun onSupportNavigateUp(): Boolean {
